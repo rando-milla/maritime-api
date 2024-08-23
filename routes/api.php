@@ -2,6 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\VoyageController;
+use App\Http\Controllers\VesselOpexController;
+use App\Http\Controllers\VesselController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,3 +20,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('/voyages', [VoyageController::class, 'store']);
+Route::put('/voyages/{voyage}', [VoyageController::class, 'update']);
+Route::post('/vessels/{vessel}/vessel-opex', [VesselOpexController::class, 'store']);
+Route::get('/vessels/{vessel}/financial-report', [VesselController::class, 'financialReport']);
