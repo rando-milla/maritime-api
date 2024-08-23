@@ -8,4 +8,17 @@ use Illuminate\Database\Eloquent\Model;
 class VesselOpex extends Model
 {
     use HasFactory;
+
+    protected $table = 'vessel_opex';
+
+    protected $fillable = [
+        'vessel_id',
+        'date',
+        'expenses',
+    ];
+
+    public function vessel()
+    {
+        return $this->belongsTo(Vessel::class, 'vessel_id');
+    }
 }
