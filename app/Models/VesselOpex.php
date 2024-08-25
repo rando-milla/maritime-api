@@ -9,7 +9,7 @@ class VesselOpex extends Model
 {
     use HasFactory;
 
-    protected $table = 'vessel_opex';
+    protected $table = 'vessel_opexes';
 
     protected $fillable = [
         'vessel_id',

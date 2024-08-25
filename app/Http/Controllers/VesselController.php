@@ -2,36 +2,72 @@
 namespace App\Http\Controllers;
 
 use App\Models\Vessel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class VesselController extends Controller
 {
-    public function financialReport($vesselId): \Illuminate\Http\JsonResponse
+    /**
+     * Generate a financial report for a vessel.
+     */
+    public function financialReport($vesselId)
     {
         $vessel = Vessel::findOrFail($vesselId);
 
-        $report = DB::table('voyages')
-            ->leftJoin('vessel_opex', function ($join) {
-                $join->on('voyages.vessel_id', '=', 'vessel_opex.vessel_id')
-                    ->whereBetween('vessel_opex.date', [DB::raw('voyages.start'), DB::raw('voyages.end')]);
-            })
-            ->select(
-                'voyages.id as voyage_id',
-                'voyages.start',
-                'voyages.end',
-                'voyages.revenues as voyage_revenues',
-                'voyages.expenses as voyage_expenses',
-                DB::raw('voyages.revenues - voyages.expenses as voyage_profit'),
-                DB::raw('(voyages.revenues - voyages.expenses) / DATEDIFF(voyages.end, voyages.start) as voyage_profit_daily_average'),
-                DB::raw('SUM(vessel_opex.expenses) as vessel_expenses_total'),
-                DB::raw('(voyages.revenues - voyages.expenses) - SUM(vessel_opex.expenses) as net_profit'),
-                DB::raw('((voyages.revenues - voyages.expenses) - SUM(vessel_opex.expenses)) / DATEDIFF(voyages.end, voyages.start) as net_profit_daily_average')
-            )
-            ->where('voyages.vessel_id', $vesselId)
-            ->groupBy('voyages.id')
-            ->get();
+        $report = $vessel->voyages()->get()->map(function ($voyage) use ($vessel) {
+            // Calculate profit
+            $profit = $voyage->revenues - $voyage->expenses;
+
+            // Calculate voyage duration in days (inclusive)
+            $start = Carbon::parse($voyage->start)->startOfDay();
+            $end = Carbon::parse($voyage->end)->endOfDay();
+            $duration = $start->diffInDays($end) + 1;
+
+            // Sum vessel operational expenses during the voyage
+            $vesselExpensesTotal = $vessel->opex()
+                ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+                ->sum('expenses');
+
+            // Calculate daily average profit
+            $voyageProfitDailyAverage = $duration > 0 ? $profit / $duration : 0;
+
+            // Calculate net profit
+            $netProfit = $profit - $vesselExpensesTotal;
+
+            // Calculate daily average net profit
+            $netProfitDailyAverage = $duration > 0 ? $netProfit / $duration : 0;
+
+            return [
+                'voyage_id' => $voyage->id,
+                'start' => $voyage->start->toDateTimeString(),
+                'end' => $voyage->end->toDateTimeString(),
+                'voyage_revenues' => round($voyage->revenues, 2),
+                'voyage_expenses' => round($voyage->expenses, 2),
+                'voyage_profit' => round($profit, 2),
+                'voyage_profit_daily_average' => round($voyageProfitDailyAverage, 2),
+                'vessel_expenses_total' => round($vesselExpensesTotal, 2),
+                'net_profit' => round($netProfit, 2),
+                'net_profit_daily_average' => round($netProfitDailyAverage, 2),
+            ];
+        });
 
         return response()->json($report, 200);
+    }
+
+    /**
+     * Update a vessel's details.
+     */
+    public function update(Request $request, Vessel $vessel)
+    {
+        $request->validate([
+            'name' => 'sometimes|required|string',
+            'imo_number' => 'sometimes|required|string|unique:vessels,imo_number,' . $vessel->id,
+        ]);
+
+        $vessel->fill($request->only(['name', 'imo_number']));
+        $vessel->save();
+
+        return response()->json($vessel, 200);
     }
 }

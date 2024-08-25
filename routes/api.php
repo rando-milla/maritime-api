@@ -21,7 +21,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Voyages Endpoints
 Route::post('/voyages', [VoyageController::class, 'store']);
 Route::put('/voyages/{voyage}', [VoyageController::class, 'update']);
+
+// Vessel Opex Endpoints
 Route::post('/vessels/{vessel}/vessel-opex', [VesselOpexController::class, 'store']);
+
+// Vessel Endpoints
+Route::put('/vessels/{vessel}', [VesselController::class, 'update']);
 Route::get('/vessels/{vessel}/financial-report', [VesselController::class, 'financialReport']);

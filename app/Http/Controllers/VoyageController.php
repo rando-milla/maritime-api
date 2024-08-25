@@ -31,7 +31,10 @@ class VoyageController extends Controller
         return response()->json($voyage, 201);
     }
 
-    public function update(Request $request, Voyage $voyage): \Illuminate\Http\JsonResponse
+    /**
+     * Update an existing voyage.
+     */
+    public function update(Request $request, Voyage $voyage)
     {
         $request->validate([
             'start' => 'nullable|date',
@@ -41,18 +44,25 @@ class VoyageController extends Controller
             'status' => ['nullable', Rule::in(['pending', 'ongoing', 'submitted'])],
         ]);
 
+
         if ($voyage->status === 'submitted') {
             return response()->json(['error' => 'Cannot edit a submitted voyage.'], 400);
         }
 
-        $voyage->fill($request->all());
-
-        if ($voyage->status === 'submitted') {
-            $voyage->profit = $voyage->revenues - $voyage->expenses;
+        // Handle status change to 'ongoing'
+        if ($request->has('status') && $request->status === 'ongoing') {
+            $vessel = $voyage->vessel;
+            if ($vessel->voyages()->where('status', 'ongoing')->where('id', '!=', $voyage->id)->exists()) {
+                return response()->json(['error' => 'This vessel already has an ongoing voyage.'], 400);
+            }
         }
 
-        $voyage->save();
-
+        try {
+            $voyage->fill($request->all());
+            $voyage->save();
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
         return response()->json($voyage, 200);
     }
 }
