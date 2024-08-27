@@ -65,6 +65,7 @@ class VoyageControllerTest extends TestCase
             'status' => 'pending',
         ]);
 
+//        var_dump($response);
         $response->assertStatus(400)
             ->assertJson([
                 'error' => 'Cannot edit a submitted voyage.',
