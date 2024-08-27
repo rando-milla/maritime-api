@@ -3,11 +3,10 @@
 namespace App\Observers;
 
 use App\Models\Vessel;
-use App\Models\Voyage;
 
 class VesselObserver
 {
-    public function updating(Vessel $vessel)
+    public function updating(Vessel $vessel): void
     {
         if ($vessel->isDirty('name')) {
             foreach ($vessel->voyages as $voyage) {

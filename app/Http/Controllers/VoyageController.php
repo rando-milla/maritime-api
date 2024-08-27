@@ -1,13 +1,10 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateVoyageRequest;
-use App\Http\Requests\UpdateVoyageRequest;
+use App\Http\Requests\Voyage\CreateVoyageRequest;
+use App\Http\Requests\Voyage\UpdateVoyageRequest;
 use App\Models\Voyage;
-use App\Models\Vessel;
 use App\Services\VoyageService;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class VoyageController extends Controller
 {

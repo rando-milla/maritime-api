@@ -1,10 +1,10 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Vessel\CreateVesselRequest;
+use App\Http\Requests\Vessel\UpdateVesselRequest;
 use App\Models\Vessel;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class VesselController extends Controller
 {
@@ -58,16 +58,17 @@ class VesselController extends Controller
     /**
      * Update a vessel's details.
      */
-    public function update(Request $request, Vessel $vessel)
+    public function update(UpdateVesselRequest $request, Vessel $vessel)
     {
-        $request->validate([
-            'name' => 'sometimes|required|string',
-            'imo_number' => 'sometimes|required|string|unique:vessels,imo_number,' . $vessel->id,
-        ]);
-
-        $vessel->fill($request->only(['name', 'imo_number']));
+        $vessel->update($request->validated());
         $vessel->save();
 
         return response()->json($vessel, 200);
+    }
+
+    public function store(CreateVesselRequest $request)
+    {
+        $vessel = Vessel::create($request->validated());
+        return response()->json($vessel, 201);
     }
 }

@@ -1,18 +1,16 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Http\Requests\VesselOpex\CreateVesselOpexRequest;
+use App\Http\Requests\VesselOpex\UpdateVesselOpexRequest;
 use App\Models\Vessel;
 use App\Models\VesselOpex;
-use Illuminate\Http\Request;
 
 class VesselOpexController extends Controller
 {
-    public function store(Request $request, $vesselId): \Illuminate\Http\JsonResponse
+    public function store(CreateVesselOpexRequest $request, $vesselId): \Illuminate\Http\JsonResponse
     {
-        $request->validate([
-            'date' => 'required|date',
-            'expenses' => 'required|numeric|min:0',
-        ]);
+        $request->validated();
 
         $vessel = Vessel::findOrFail($vesselId);
 
@@ -24,5 +22,11 @@ class VesselOpexController extends Controller
         $vessel->opex()->save($opex);
 
         return response()->json($opex, 201);
+    }
+
+    public function update(UpdateVesselOpexRequest $request, VesselOpex $vesselOpex)
+    {
+        $vesselOpex->update($request->validated());
+        return response()->json($vesselOpex);
     }
 }
